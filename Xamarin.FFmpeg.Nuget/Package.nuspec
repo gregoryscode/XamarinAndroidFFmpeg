@@ -2,7 +2,7 @@
 <package >
   <metadata>
     <id>Xamarin.FFmpeg</id>
-    <version>1.0.3</version>
+    <version>1.0.4</version>
     <title>FFmpeg binding for Xamarin Android</title>
     <authors>gregory.perozzo</authors>
     <owners></owners>

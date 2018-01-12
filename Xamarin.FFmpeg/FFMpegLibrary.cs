@@ -285,9 +285,18 @@ namespace FFMpeg.Xamarin
         /// <returns></returns>
         public static async Task<bool> Download(Context context)
         {
-            var filesDir = context.FilesDir;
+            Java.IO.File ffmpegFile;
 
-            var ffmpegFile = new Java.IO.File(filesDir + "/ffmpeg");
+            if (SourceFolder != null)
+            {
+                ffmpegFile = new Java.IO.File(SourceFolder + "/ffmpeg");
+            }
+            else
+            {
+                var filesDir = context.FilesDir;
+
+                ffmpegFile = new Java.IO.File(filesDir + "/ffmpeg");
+            }
 
             FFmpegSource source = FFmpegSource.Get();
 
