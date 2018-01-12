@@ -44,6 +44,7 @@
     <Reference Include="System.Xml" />
   </ItemGroup>
   <ItemGroup>
+    <Compile Include="Exceptions\FFmpegNotDownloadedException.cs" />
     <Compile Include="Exceptions\FFmpegNotInitializedException.cs" />
     <Compile Include="FFmpegLibrary.cs" />
     <Compile Include="FFmpegSource.cs" />

@@ -6,7 +6,6 @@ using Android.App;
 using Android.Content;
 using System.Threading.Tasks;
 using Xamarin.FFmpeg.Exceptions;
-using Android.Widget;
 
 namespace FFMpeg.Xamarin
 {
@@ -26,6 +25,7 @@ namespace FFMpeg.Xamarin
         /// </summary>
         /// <param name="context">Context</param>
         /// <exception cref="FFmpegNotInitializedException"></exception>
+        /// <exception cref="FFmpegNotDownloadedException"></exception>
         /// <returns></returns>
         public async Task Init(Context context)
         {
@@ -151,6 +151,7 @@ namespace FFMpeg.Xamarin
                         }
 
                         dialog.Hide();
+                        dialog.Dispose();
                     }
                 }
             }
@@ -158,17 +159,16 @@ namespace FFMpeg.Xamarin
             {       
                 _initialized = false;
 
-                Toast.MakeText(context, "It was not possible to download FFmpeg library. Please, try again.", ToastLength.Short).Show();
+                dialog.Hide();
+                dialog.Dispose();
 
-                return;
+                throw new FFmpegNotDownloadedException();
             }
 
             if (!_ffmpegFile.CanExecute())
             {
                 _ffmpegFile.SetExecutable(true);
             }
-
-            Toast.MakeText(context, "FFmpeg library downloaded successfully.", ToastLength.Short).Show();
 
             _initialized = true;
         }
@@ -274,6 +274,95 @@ namespace FFMpeg.Xamarin
             }
 
             return process.ExitCode;
+        }
+
+        /// <summary>
+        /// Download the FFmpeg library
+        /// </summary>
+        /// <param name="context">Context</param>
+        /// <exception cref="FFmpegNotInitializedException"></exception>
+        /// <exception cref="FFmpegNotDownloadedException"></exception>
+        /// <returns></returns>
+        public static async Task<bool> Download(Context context)
+        {
+            var filesDir = context.FilesDir;
+
+            var ffmpegFile = new Java.IO.File(filesDir + "/ffmpeg");
+
+            FFmpegSource source = FFmpegSource.Get();
+
+            if (source == null)
+            {
+                throw new FFmpegNotInitializedException();
+            }
+
+            if (Url != null)
+            {
+                source.SetUrl(Url);
+            }
+
+            var dialog = new ProgressDialog(context);
+            dialog.SetTitle(DownloadTitle ?? "Realizando download da biblioteca FFmpeg");
+            dialog.Indeterminate = false;
+            dialog.SetProgressStyle(ProgressDialogStyle.Horizontal);
+            dialog.SetCancelable(false);
+            dialog.SetCanceledOnTouchOutside(false);
+            dialog.Show();
+
+            try
+            {
+                using (var c = new System.Net.Http.HttpClient())
+                {
+                    using (var fout = System.IO.File.OpenWrite(ffmpegFile.AbsolutePath))
+                    {
+                        string url = source.Url;
+
+                        var g = new System.Net.Http.HttpRequestMessage(System.Net.Http.HttpMethod.Get, url);
+
+                        var h = await c.SendAsync(g, System.Net.Http.HttpCompletionOption.ResponseHeadersRead);
+
+                        var buffer = new byte[51200];
+
+                        var s = await h.Content.ReadAsStreamAsync();
+                        long total = h.Content.Headers.ContentLength.GetValueOrDefault();
+
+                        IEnumerable<string> sl;
+
+                        if (h.Headers.TryGetValues("Content-Length", out sl))
+                        {
+                            if (total == 0 && sl.Any())
+                            {
+                                long.TryParse(sl.FirstOrDefault(), out total);
+                            }
+                        }
+
+                        int count = 0;
+                        int progress = 0;
+
+                        dialog.Max = (int)total;
+
+                        while ((count = await s.ReadAsync(buffer, 0, buffer.Length)) > 0)
+                        {
+                            await fout.WriteAsync(buffer, 0, count);
+
+                            progress += count;
+
+                            dialog.Progress = progress;
+                        }
+
+                        dialog.Hide();
+                        dialog.Dispose();
+                    }
+                }
+            }
+            catch (Exception)
+            {
+                dialog.Hide();
+                dialog.Dispose();
+                throw new FFmpegNotDownloadedException();
+            }
+
+            return true;
         }
 
         /// <summary>
