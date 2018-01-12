@@ -1,0 +1,33 @@
+<?xml version="1.0"?>
+<package >
+  <metadata>
+    <id>Xamarin.FFmpeg</id>
+    <version>1.0.0</version>
+    <title>FFmpeg binding for Xamarin Android</title>
+    <authors>gregory.perozzo</authors>
+    <owners></owners>
+    <description>
+      FFmpeg binding for Xamarin Android      
+    </description>
+    <releaseNotes>
+    </releaseNotes>
+    <summary>
+      FFmpeg binding for Xamarin Android
+    </summary>
+    <language>en-US</language>
+    <projectUrl>https://github.com/gperozzo/XamarinAndroidFFmpeg</projectUrl>
+    <iconUrl>https://www.nuget.org/Content/Images/packageDefaultIcon-50x50.png</iconUrl>
+    <requireLicenseAcceptance>false</requireLicenseAcceptance>
+    <licenseUrl>http://opensource.org/licenses/Apache-2.0</licenseUrl>
+    <copyright>Copyright 2018</copyright>
+    <dependencies>
+    </dependencies>
+    <references></references>
+    <tags>xamarin,ffmpeg,android</tags>
+  </metadata>
+  <files>
+    <file src="..\Xamarin.FFmpeg\bin\debug\*.dll" target="lib" />
+    <file src="..\Xamarin.FFmpeg\bin\debug\*.pdb" target="lib" />
+    <file src="..\Xamarin.FFmpeg\bin\debug\*.mdb" target="lib" />
+  </files>
+</package>
