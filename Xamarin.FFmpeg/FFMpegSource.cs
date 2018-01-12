@@ -4,25 +4,24 @@ namespace FFMpeg.Xamarin
 {
     public class FFmpegSource
     {
-        public static string FFmpegVersion { get; } = "1.0.0";
+        private static string FFmpegVersion { get; } = "3.0.1.1";
+        public string Url { get; set; }
+        public string Arch { get; }
+        public string Hash { get; }
+        public Func<string, bool> IsArch { get; }
 
         public FFmpegSource(string arch, Func<string, bool> isArch, string hash)
         {
-            this.Arch = arch;
-            this.IsArch = isArch;
-            this.Hash = hash;
+            Arch = arch;
+            IsArch = isArch;
+            Hash = hash;
+            Url = $"https://raw.githubusercontent.com/gperozzo/XamarinAndroidFFmpeg/master/binary/{FFmpegVersion}/{Arch}/ffmpeg";
         }
 
         public static FFmpegSource[] Sources = new FFmpegSource[] {
             new FFmpegSource("arm", x=> !x.EndsWith("86"), "yRVoeaZATQdZIR/lZxMsIa/io9U="),
             new FFmpegSource("x86", x=> x.EndsWith("86"), "mU4QKhrLEO0aROb9N7JOCJ/rVTA==")
         };
-
-        public string Arch { get; }
-        public string Hash { get; }       
-        public string Url => $"https://{FFmpegLibrary.Instance.CDNHost}/gperozzo/XamarinAndroidFFmpeg/v1.0.7/binary/{FFmpegVersion}/{Arch}/ffmpeg";
-
-        public Func<string, bool> IsArch { get; }
 
         public static FFmpegSource Get()
         {
@@ -35,6 +34,11 @@ namespace FFMpeg.Xamarin
             }
 
             return null;
+        }
+
+        public void SetUrl(string url)
+        {
+            Url = url;
         }
 
         public bool IsHashMatch(byte[] data)

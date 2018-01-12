@@ -6,54 +6,55 @@ using Android.App;
 using Android.Content;
 using System.Threading.Tasks;
 using Xamarin.FFmpeg.Exceptions;
+using Android.Widget;
 
 namespace FFMpeg.Xamarin
 {
     public class FFmpegLibrary
     {
-        public static string EndOfFFMPEGLine = "final ratefactor:";
-
-        public string CDNHost { get; set; } = "raw.githubusercontent.com";
-
-        private static string Url { get; set; }
-
         public readonly static FFmpegLibrary Instance = new FFmpegLibrary();
 
+        public static string EndOfFFMPEGLine = "final ratefactor:";
+        private static string Url { get; set; }
+        private static string SourceFolder { get; set; }
+        private static string DownloadTitle { get; set; }
         private bool _initialized = false;
-
         private Java.IO.File _ffmpegFile;
-
-        public static void SetDownloadUrl(string url)
-        {
-            Url = url;
-        }
 
         /// <summary>
         /// Initializes the FFmpeg library and download it if necessary
         /// </summary>
-        /// <param name="context"></param>
-        /// <param name="downloadTitle"></param>
+        /// <param name="context">Context</param>
         /// <exception cref="FFmpegNotInitializedException"></exception>
         /// <returns></returns>
-        public async Task Init(Context context, string downloadUrl = null, string sourcePath= null, string downloadTitle = null)
+        public async Task Init(Context context)
         {
             if (_initialized)
+            {
                 return;
+            }
+
+            if(SourceFolder != null)
+            {
+                _ffmpegFile = new Java.IO.File(SourceFolder + "/ffmpeg");
+            }
+            else
+            {
+                var filesDir = context.FilesDir;
+
+                _ffmpegFile = new Java.IO.File(filesDir + "/ffmpeg");
+            }
+
+            FFmpegSource source = FFmpegSource.Get();                        
+
+            if (source == null)
+            {
+                throw new FFmpegNotInitializedException();
+            }
 
             if (Url != null)
             {
-                CDNHost = Url;
-            }
-
-            var filesDir = context.FilesDir;
-
-            _ffmpegFile = new Java.IO.File(filesDir + "/ffmpeg");
-
-            FFmpegSource source = FFmpegSource.Get();
-
-            if(source == null)
-            {
-                throw new FFmpegNotInitializedException();
+                source.SetUrl(Url);
             }
 
             await Task.Run(() =>
@@ -83,7 +84,7 @@ namespace FFMpeg.Xamarin
                     {
                         _ffmpegFile.SetExecutable(false);
                     }
-                        
+
                     _ffmpegFile.Delete();
                 }
             });
@@ -101,60 +102,73 @@ namespace FFMpeg.Xamarin
 
             // Download
             var dialog = new ProgressDialog(context);
-            dialog.SetTitle(downloadTitle ?? "Realizando download da biblioteca FFmpeg");
+            dialog.SetTitle(DownloadTitle ?? "Realizando download da biblioteca FFmpeg");
             dialog.Indeterminate = false;
             dialog.SetProgressStyle(ProgressDialogStyle.Horizontal);
             dialog.SetCancelable(false);
             dialog.SetCanceledOnTouchOutside(false);
             dialog.Show();
 
-            using (var c = new System.Net.Http.HttpClient())
+            try
             {
-                using (var fout = System.IO.File.OpenWrite(_ffmpegFile.AbsolutePath))
+                using (var c = new System.Net.Http.HttpClient())
                 {
-                    string url = source.Url;
-
-                    var g = new System.Net.Http.HttpRequestMessage(System.Net.Http.HttpMethod.Get, url);
-
-                    var h = await c.SendAsync(g, System.Net.Http.HttpCompletionOption.ResponseHeadersRead);
-
-                    var buffer = new byte[51200];
-
-                    var s = await h.Content.ReadAsStreamAsync();
-                    long total = h.Content.Headers.ContentLength.GetValueOrDefault();
-
-                    IEnumerable<string> sl;
-
-                    if (h.Headers.TryGetValues("Content-Length", out sl))
+                    using (var fout = System.IO.File.OpenWrite(_ffmpegFile.AbsolutePath))
                     {
-                        if (total == 0 && sl.Any())
+                        string url = source.Url;
+
+                        var g = new System.Net.Http.HttpRequestMessage(System.Net.Http.HttpMethod.Get, url);
+
+                        var h = await c.SendAsync(g, System.Net.Http.HttpCompletionOption.ResponseHeadersRead);
+
+                        var buffer = new byte[51200];
+
+                        var s = await h.Content.ReadAsStreamAsync();
+                        long total = h.Content.Headers.ContentLength.GetValueOrDefault();
+
+                        IEnumerable<string> sl;
+
+                        if (h.Headers.TryGetValues("Content-Length", out sl))
                         {
-                            long.TryParse(sl.FirstOrDefault(), out total);
+                            if (total == 0 && sl.Any())
+                            {
+                                long.TryParse(sl.FirstOrDefault(), out total);
+                            }
                         }
+
+                        int count = 0;
+                        int progress = 0;
+
+                        dialog.Max = (int)total;
+
+                        while ((count = await s.ReadAsync(buffer, 0, buffer.Length)) > 0)
+                        {
+                            await fout.WriteAsync(buffer, 0, count);
+
+                            progress += count;
+
+                            dialog.Progress = progress;
+                        }
+
+                        dialog.Hide();
                     }
-
-                    int count = 0;
-                    int progress = 0;
-
-                    dialog.Max = (int)total;
-
-                    while ((count = await s.ReadAsync(buffer, 0, buffer.Length)) > 0)
-                    {
-                        await fout.WriteAsync(buffer, 0, count);
-
-                        progress += count;
-
-                        dialog.Progress = progress;
-                    }
-
-                    dialog.Hide();
                 }
+            }
+            catch(Exception)
+            {       
+                _initialized = false;
+
+                Toast.MakeText(context, "It was not possible to download FFmpeg library. Please, try again.", ToastLength.Short).Show();
+
+                return;
             }
 
             if (!_ffmpegFile.CanExecute())
             {
                 _ffmpegFile.SetExecutable(true);
             }
+
+            Toast.MakeText(context, "FFmpeg library downloaded successfully.", ToastLength.Short).Show();
 
             _initialized = true;
         }
@@ -167,13 +181,13 @@ namespace FFMpeg.Xamarin
         /// <param name="downloadTitle"></param>
         /// <param name="logger"></param>
         /// <returns></returns>
-        public static async Task<int> Run(Context context, string cmd, string downloadTitle = null, Action<string> logger = null)
+        public static async Task<int> Run(Context context, string cmd, Action<string> logger = null)
         {
             try
             {
                 TaskCompletionSource<int> source = new TaskCompletionSource<int>();
 
-                await Instance.Init(context, null, downloadTitle);
+                await Instance.Init(context);
 
                 await Task.Run(() =>
                 {
@@ -260,6 +274,33 @@ namespace FFMpeg.Xamarin
             }
 
             return process.ExitCode;
+        }
+
+        /// <summary>
+        /// Set the download url for ffmpeg library
+        /// </summary>
+        /// <param name="url"></param>
+        public static void SetDownloadUrl(string url)
+        {
+            Url = url;
+        }
+
+        /// <summary>
+        /// Set the source folder containing the ffmpeg library
+        /// </summary>
+        /// <param name="path"></param>
+        public static void SetSourceFolder(string path)
+        {
+            SourceFolder = path;
+        }
+
+        /// <summary>
+        /// Set the source folder containing the ffmpeg library
+        /// </summary>
+        /// <param name="path"></param>
+        public static void SetDownloadTitle(string title)
+        {
+            DownloadTitle = title;
         }
     }
 }
