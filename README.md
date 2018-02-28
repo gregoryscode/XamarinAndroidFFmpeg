@@ -20,4 +20,8 @@ FFmpeg library to run ffmeg commands over Xamarin.Android.
 
 ## Nuget package
 You can download Xamarin.FFmpeg package from Nuget Package Manager or run following command in Nuget Package Console.
-`Install-Package Xamarin.FFmpeg -Version 1.0.4`
+```
+Install-Package Xamarin.FFmpeg -Version 1.0.4
+```
+## Usage
+On the way...
