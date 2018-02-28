@@ -14,6 +14,7 @@ FFmpeg library to run ffmeg commands over Xamarin.Android.
 
 <h3>License</h3>
 <ul>
-  <li>Check file LICENSE.GPLv3 and Make sure to follow the licensing terms and conditions of the project and the software used to build the project.</li>
+  <li>[MIT](../master/LICENSE)</li>
+  <li>Besides that, to use this library you must accept the licensing terms mentioned in the source project at https://github.com/WritingMinds/ffmpeg-android-java</li>
 </ul>
 
