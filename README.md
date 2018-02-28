@@ -1,4 +1,4 @@
-# XamarinAndroidFFmpeg
+# XamarinAndroidFFmpeg (Xamarin.FFmpeg)
 FFmpeg library to run ffmeg commands over Xamarin.Android.
 
 <h3>About</h3>
@@ -14,7 +14,12 @@ FFmpeg library to run ffmeg commands over Xamarin.Android.
 
 <h3>License</h3>
 <ul>
-  <li>[MIT](../master/LICENSE)</li>
+  <li>MIT</li>
   <li>Besides that, to use this library you must accept the licensing terms mentioned in the source project at https://github.com/WritingMinds/ffmpeg-android-java</li>
 </ul>
 
+<h3>Nuget package</h3>
+You can download Xamarin.FFmpeg package from Nuget Package Manager or run following command in Nuget Package Console.<br>
+```
+Install-Package Xamarin.FFmpeg -Version 1.0.4
+```
