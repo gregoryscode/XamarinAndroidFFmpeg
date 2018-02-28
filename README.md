@@ -1,8 +1,12 @@
 # XamarinAndroidFFmpeg
 FFmpeg library to run ffmeg commands over Xamarin.Android.
 
-# About
+<h3>About</h3>
 - Created to support a solution that needed ffmpeg to control camera devices.
 
-# Big thanks
-FFmpeg library adapted from https://github.com/neurospeech/xamarin-android-ffmpeg.
+<h3>Big thanks</h3>
+- FFmpeg library adapted from [xamarin-android-ffmpeg](https://github.com/neurospeech/xamarin-android-ffmpeg)
+- Original library in java [ffmpeg-android-java](https://github.com/WritingMinds/ffmpeg-android-java) 
+
+<h3>Big thanks</h3>
+- 
